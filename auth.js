@@ -80,14 +80,18 @@ router.post('/signup', function(req, res) {
 router.get('/home', function (req, res) {
   if (req.session && req.session.authenticated) {
     models.post.findAll({
-    include: [{
+      include: [{
         model: models.like,
-        as: 'likeData'
+        as: 'likeData',
+        include: [{
+          model: models.user,
+          as: 'userData'
+        }]
       },{
-      model: models.user,
-      as: 'userData'
-    }]
-  }).then(function(post) {
+        model: models.user,
+        as: 'userData'
+      }]
+    }).then(function(post) {
     function compare(a,b) {
       if (a.id > b.id)
         return -1;
@@ -102,76 +106,36 @@ router.get('/home', function (req, res) {
 });
 
 router.post('/home', function(req, res) {
-  req.checkBody('post', 'You must enter a post').notEmpty();
-  var errors = req.validationErrors();
-  if (errors) {
-    //create notification to tell user that they need to resubmit the form//
-  } else {
-      const post = models.post.build({
-        post: req.body.post,
+  if (req.body.post) {
+    req.checkBody('post', 'You must enter a post').notEmpty();
+    var errors = req.validationErrors();
+    if (errors) {
+      //create notification to tell user that they need to resubmit the form//
+    } else {
+        const post = models.post.build({
+          post: req.body.post,
+          userId: req.session.userId,
+        });
+        post.save();
+        res.redirect('/home');
+      }
+  } else if (req.body.likeButton) {
+    // for (let i = 0; i < post.length; i++) {
+    //   if (like.userId[i] === req.session.userId) {
+    //       res.redirect('/home');
+    // } else {
+      const newLike = models.like.build({
         userId: req.session.userId,
-      });
-      post.save();
-      res.redirect('/home');
-  }
-});
-
-var getLikeData = function (req, res, next) {
-  models.post.find({
-      where: {id: req.params.id},
-      include: [{
-        model: models.like,
-        as: 'likeData',
-        include: [{
-          model: models.user,
-          as: 'userData'
-        }]
-      },{
-        model: models.user,
-        as: 'userData'
-      }]
-    }).then(function(post) {
-      return post;
-      next()
-  })
-};
-
-router.get('/like/:id', getLikeData, function (req, res, next) {
-  next()
-});
-
-router.post('/like', getLikeData, function(req, res) {
-  console.log(post);
-  var likeClicked = req.body.likeButton;
-  var liked = false;
-  console.log(req.body.likeButton);
-  if (likeClicked && liked === false) {
-    const newLike = models.like.build({
-      userId: req.session.userId,
-      postId: likeClicked
-    })
-  post.save();
-  liked = true;
-  res.render('home', {displayname: req.session.displayname, posts: post});
-  }
+        postId: req.body.likeButton
+      })
+    newLike.save();
+    res.redirect('/home');
+    }
+  // }
+// }
 });
 
 
-// router.post('/like/:postId', function(req, res) {
-//   var likeButton = req.body.likeButton;
-//   var liked = false;
-//   var counter = 0;
-//   if (likeButton && counter < 1) {
-//     const like = models.like.build({
-//       userId: req.session.userId,
-//       postId: likeButton
-//     });
-//     post.save();
-//     liked = true;
-//     couter += 1;
-//     res.redirect('/home');
-//   }
-// })
 
 router.post('/logout', function(req, res){
   var logOutButton = req.body.logout;

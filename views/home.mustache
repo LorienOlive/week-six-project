@@ -38,8 +38,8 @@
             <li class="userWhoLiked">{{userData.displayname}}</li>
           </ul>
           {{/likeData}}
-          <form action="/like" method="post" class="like-button">
-            <button type="submit" class="likeButton" name="likeButton" value="{{id}}"><a href="/like/{{id}}">Like</a></button>
+          <form action="/home" method="post" class="like-button">
+            <button type="submit" class="likeButton" name="likeButton" value="{{id}}">Like</button>
           </form>
         </div>
       {{/posts}}
