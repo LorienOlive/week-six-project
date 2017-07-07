@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Gabble - Home</title>
+
+  </head>
+  <body>
+    <header class="home-header">
+      {{#displayname}}
+      <div class="displayname">
+      {{displayname}}
+      </div>
+      {{/displayname}}
+      <form action="/logout" method="post" class="reset">
+          <button type="submit" name="logout" id="logout" value="">logout</button>
+      </form>
+    </header>
+
+    <div class="body-wrapper">
+      <form action="/home" method="post" class="makePost">
+        <label for="username">Write a New Gab</label>
+        <textarea name="post" placeholder="Your Gab"></textarea>
+        <input type="submit" class="button">
+      </form>
+      {{#posts}}
+        <div class="post-wrapper">
+          <div class="post">{{post}}</div>
+          <div class="post-user">{{userData.displayname}}</div>
+          {{#likeData.length}}
+            <div class="like">{{likeData.length}}</div>
+          {{/likeData.length}}
+          {{^likeData}}
+            <div class="noLike">No likes Yet</div>
+          {{/likeData}}
+          {{#likeData}}
+          <ul class="usersWhoLiked">
+            <li class="userWhoLiked">{{userData.displayname}}</li>
+          </ul>
+          {{/likeData}}
+          <form action="/like" method="post" class="like-button">
+            <button type="submit" class="likeButton" name="likeButton" value="{{id}}"><a href="/like/{{id}}">Like</a></button>
+          </form>
+        </div>
+      {{/posts}}
+    </div>
+  </body>
+</html>
