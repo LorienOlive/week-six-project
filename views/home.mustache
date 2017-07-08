@@ -7,16 +7,28 @@
   </head>
   <body>
     <header class="home-header">
-      {{#displayname}}
-      <div class="displayname">
-      {{displayname}}
-      </div>
-      {{/displayname}}
-      <form action="/logout" method="post" class="reset">
-          <button type="submit" name="logout" id="logout" value="">logout</button>
-      </form>
+      <nav>
+        <ul class="nav-row">
+          <li class="nav-item">
+            <div class="active-user-pic">
+            </div>
+            {{#displayname}}
+            <div class="displayname">
+            {{displayname}}
+            </div>
+            {{/displayname}}
+          </li>
+          <li class="nav-item">
+            <form action="/logout" method="post" class="reset">
+                <button type="submit" name="logout" id="logout" value="">logout</button>
+            </form>
+          </li class="nav-item">
+            <div class="logo"></div>
+            <span class="gabble-top">Gabble</span>
+          <li>
+        </ul>
+      </nav>
     </header>
-
     <div class="body-wrapper">
       <form action="/home" method="post" class="makePost">
         <label for="username">Write a New Gab</label>
@@ -25,8 +37,9 @@
       </form>
       {{#posts}}
         <div class="post-wrapper">
-          <div class="post">{{post}}</div>
+          <div class="poster-pic"></div>
           <div class="post-user">{{userData.displayname}}</div>
+          <div class="post">{{post}}</div>
           {{#likeData.length}}
             <div class="like">{{likeData.length}}</div>
           {{/likeData.length}}
@@ -38,11 +51,30 @@
             <li class="userWhoLiked">{{userData.displayname}}</li>
           </ul>
           {{/likeData}}
+          {{^liked}}
           <form action="/home" method="post" class="like-button">
             <button type="submit" class="likeButton" name="likeButton" value="{{id}}">Like</button>
           </form>
+          {{/liked}}
+          {{#liked}}
+          <form action="/home" method="post" class="like-button">
+            <button type="submit" class="likeButton" name="likeButton" value="{{id}}">Unlike</button>
+          </form>
+          {{/liked}}
+          {{#delete}}
+          <form action="/home" method="post" class="delete-button">
+            <button type="submit" class="likeButton" name="deleteButton" value="{{id}}">Delete</button>
+          </form>
+          {{/delete}}
+          {{^delete}}
+          <span><span>
+          {{/delete}}
         </div>
       {{/posts}}
     </div>
+    <footer>
+      <div class="logo"></div>
+      <div class="gabble-bottom"></div>
+    </footer>
   </body>
 </html>

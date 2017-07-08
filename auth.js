@@ -68,7 +68,7 @@ router.post('/signup', function(req, res) {
   }
   var errors = req.validationErrors();
   if (errors) {
-    //create notification to tell user that they need to resubmit the form//
+//create notification to tell user that they need to resubmit the form//
   } else {
     models.user.create(signUpData).then(function(user) {
       res.redirect('/home');
@@ -76,9 +76,10 @@ router.post('/signup', function(req, res) {
   }
 });
 
-
 router.get('/home', function (req, res) {
+//check to see if user is logged in//
   if (req.session && req.session.authenticated) {
+//gather all data related to all posts//
     models.post.findAll({
       include: [{
         model: models.like,
@@ -92,6 +93,7 @@ router.get('/home', function (req, res) {
         as: 'userData'
       }]
     }).then(function(post) {
+//sort posts from most recent to oldest//
     function compare(a,b) {
       if (a.id > b.id)
         return -1;
@@ -99,44 +101,100 @@ router.get('/home', function (req, res) {
         return 1;
     }
     posts = post.sort(compare);
-    res.render('home', {displayname: req.session.displayname, posts: post} )
+//check to see if a post has been liked or not to switch between 'like' and 'unlike' buttons//
+    for (let i = 0; i < post.length; i++) {
+      for (let j = 0; j < Object.keys(posts[i].likeData).length; j++) {
+        if (posts[i].likeData[j].userId.toString() == req.session.userId) {
+          posts[i].liked = true;
+          posts[i].likeId = posts[i].likeData[j].id
+        }
+      }
+    }
+//check to see if the post belongs to the active user, to determine if it should have a delete button//
+    for (let i = 0; i <post.length; i++) {
+      if (post[i].userId.toString() == req.session.userId) {
+        post[i].delete = true;
+      }
+    }
+//render home page with the active user's name and all relevant post-related data//
+  res.render('home', {displayname: req.session.displayname, posts: post});
   })} else {
-    res.redirect('/login');
+//if user is not authenticated, redirect to the login page//
+  res.redirect('/login');
   }
 });
 
-router.post('/home', function(req, res) {
+router.post('/home',  function(req, res) {
+//check to see if the user has entered a post//
   if (req.body.post) {
     req.checkBody('post', 'You must enter a post').notEmpty();
     var errors = req.validationErrors();
     if (errors) {
-      //create notification to tell user that they need to resubmit the form//
+//create notification to tell user that they need to resubmit the form//
     } else {
+//insert a new post into the post table//
         const post = models.post.build({
           post: req.body.post,
           userId: req.session.userId,
         });
         post.save();
-        res.redirect('/home');
+//redirect to the home page where the new post will appear//
+        return res.redirect('/home');
       }
+//check to see if the user has liked a post//
   } else if (req.body.likeButton) {
-    // for (let i = 0; i < post.length; i++) {
-    //   if (like.userId[i] === req.session.userId) {
-    //       res.redirect('/home');
-    // } else {
-      const newLike = models.like.build({
-        userId: req.session.userId,
-        postId: req.body.likeButton
+    var id = req.body.likeButton;
+//check whether user has liked a post already//
+    var checkForLike = models.post.findOne({where:
+      {id: req.body.likeButton}
+      , include: {
+          model: models.like,
+          as: 'likeData'
+      }}).then( function(likedPost) {
+        for (let i = 0; i < likedPost.likeData.length; i++) {
+          for (let j = 0; j < likedPost.likeData[i].userId.length; j++) {
+            if (likedPost.likeData[i].userId[j] == req.session.userId) {
+              req.session.liked = true;
+            }
+          }
+        }
+//if the user has already liked the post, allow them to unlike it and delete their like//
+        if (req.session.liked === true) {
+          var unlike = models.like.destroy({where:
+            {postId: id,
+             userId: req.session.userId}
+            })
+            .then(function() {
+              req.session.liked = false;
+              res.redirect("/home");
+            })
+//if the user has not liked the post, allow them to like it and insert a new like into the like table//
+        } else {
+          var newLike = models.like.create({
+            userId: req.session.userId,
+            postId: id
+            })
+            .then(function() {
+            req.session.liked = true;
+            res.redirect("/home");
+            })
+          }
       })
-    newLike.save();
-    res.redirect('/home');
-    }
-  // }
-// }
+//check to see if the user has clicked the delete button//
+  } else if (req.body.deleteButton) {
+//delete a post from the post table//
+    var deletePost = models.post.destroy({where:
+      {id: req.body.deleteButton,
+       userId: req.session.userId}
+    })
+    .then(function(post) {
+//redirect to home page where the post will no longer appear//
+    return res.redirect("/home");
+    })
+  }
 });
 
-
-
+//create a logout path//
 router.post('/logout', function(req, res){
   var logOutButton = req.body.logout;
   req.session.destroy();
